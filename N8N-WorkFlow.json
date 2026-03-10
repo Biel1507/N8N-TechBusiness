@@ -1,0 +1,503 @@
+{
+  "name": "My workflow 7",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3fcdfc31-6d93-4c11-a0a2-b259c33fd0a4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -688,
+        -16
+      ],
+      "id": "eb6fce81-852f-400c-9dcd-2006209610e0",
+      "name": "Webhook",
+      "webhookId": "3fcdfc31-6d93-4c11-a0a2-b259c33fd0a4",
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "executeOnce": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "output = []  # Vai armazenar os itens tratados\n\nfor item in items:\n    nome = item[\"json\"].get(\"nome\")\n\n    if nome:\n        # Deixa tudo minúsculo\n        nome = nome.lower().strip()\n\n        # Remove espaços duplicados usando replace\n        while \"  \" in nome:\n            nome = nome.replace(\"  \", \" \")\n\n        # Remove caracteres especiais (mantém apenas letras e espaço)\n        nome_limpo = \"\"\n        for c in nome:\n            if c.isalpha() or c == \" \":\n                nome_limpo += c\n\n        palavras = nome_limpo.split(\" \")\n\n        nome_formatado = \"\"\n\n        # Capitaliza cada palavra\n        for p in palavras:\n            if p:\n                nome_formatado += p[0].upper() + p[1:] + \" \"\n\n        # Atualiza o campo\n        item[\"json\"][\"nome\"] = nome_formatado.strip()\n\n    output.append(item)\n\nreturn output"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -16
+      ],
+      "id": "1248f500-34de-4d69-a4d5-a6ed6801f4ae",
+      "name": "Code in Python (nome)"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "output = [] # Vai armazenar os itens\n\nfor item in items: # Passa por cada item do node\n    telefone = item[\"json\"].get(\"telefone\") # Pega o valor do campo Telefone no JSON\n\n    if telefone: \n        telefone_limpo = \"\".join( \n            c for c in telefone if c.isdigit()\n        ) # Condição para garantir que o campo não está vazio \n        #Remove os (), espaços e traços\n      \n        item[\"json\"][\"telefone\"] = telefone_limpo # Substitui o telefone com espaços para o telefone limpo\n\n    output.append(item) # Adiciona o item tratado na lista de saída\n\nreturn output"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -16
+      ],
+      "id": "de72ec09-378d-41e0-bac5-0d3b8c02189c",
+      "name": "Code in Python (telefone)"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "from datetime import datetime\n\noutput = []\n\nfor item in items:\n    data = item[\"json\"].get(\"data_nascimento\")\n\n    if data:\n        try:\n            # Converte do formato brasileiro\n            data_convertida = datetime.strptime(data, \"%d/%m/%Y\")\n            \n            # Converte para formato americano\n            item[\"json\"][\"data_nascimento\"] = data_convertida.strftime(\"%Y-%m-%d\")\n        \n        except ValueError:\n            # Se a data estiver inválida, mantém original ou define como None\n            item[\"json\"][\"data_nascimento\"] = None\n\n    output.append(item)\n\nreturn output"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "c1abfcd8-5a4e-4f6a-b81e-64dc0ef6f178",
+      "name": "Code in Python (data_nascimento)"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import csv\nfrom io import StringIO\n\noutput = []  # Lista que vai armazenar todos os registros convertidos\n\n# Percorre cada item recebido do Webhook\nfor item in items:\n    \n    # Percorre cada arquivo enviado (ex: file1, file2)\n    for key in item[\"json\"][\"body\"]:\n        \n        # Pega o conteúdo do CSV como texto\n        csv_string = item[\"json\"][\"body\"][key]\n        \n        # Remove possível caractere invisível (BOM) do início\n        csv_string = csv_string.lstrip('\\ufeff')\n\n        # Converte o texto em formato de leitura CSV (separado por ;)\n        reader = csv.DictReader(StringIO(csv_string), delimiter=';')\n\n        # Percorre cada linha do CSV\n        for row in reader:\n            \n            # Cria um novo item JSON padronizado\n            output.append({\n                \"json\": {\n                    \"nome\": row[\"Nome\"],  # Coluna Nome\n                    \"email\": row[\"Email\"],  # Coluna Email\n                    \"data_nascimento\": row[\"Data_Nascimento\"],  # Coluna Data_Nascimento\n                    \"telefone\": row[\"Telefone\"],  # Coluna Telefone\n                    \"curso\": row[\"Curso\"]  # Coluna Curso\n                }\n            })\n\n# Retorna todos os registros para o próximo node\nreturn output"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        -16
+      ],
+      "id": "a1d7153f-4671-484f-8b22-11a7db0aa75b",
+      "name": "Code in Python (csv)"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.curso }}",
+                    "rightValue": "Tech",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a1c52e53-2847-4aa5-ac4c-339c3874dbda"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6b24bc0f-02fd-4571-b150-2b8db417bf57",
+                    "leftValue": "={{ $json.curso }}",
+                    "rightValue": "Business",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1008,
+        -16
+      ],
+      "id": "a0a10327-61ac-4c5a-89c3-2c42351273ea",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Tech",
+          "mode": "list",
+          "cachedResultName": "Tech"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telefone": "={{ $json.telefone }}",
+            "nome": "={{ $json.nome }}",
+            "email": "={{ $json.email }}",
+            "data_nascimento": "={{ $json.data_nascimento }}",
+            "curso": "={{ $json.curso }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_nascimento",
+              "displayName": "data_nascimento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "curso",
+              "displayName": "curso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1360,
+        -112
+      ],
+      "id": "2f692b74-49ba-44c0-bbe4-5474a0f9e53e",
+      "name": "Insert rows Tech",
+      "credentials": {
+        "postgres": {
+          "id": "q3p0Xx3j35B1BgdJ",
+          "name": "Postgres account 26"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Business",
+          "mode": "list",
+          "cachedResultName": "Business"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telefone": "={{ $json.telefone }}",
+            "nome": "={{ $json.nome }}",
+            "email": "={{ $json.email }}",
+            "data_nascimento": "={{ $json.data_nascimento }}",
+            "curso": "={{ $json.curso }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_nascimento",
+              "displayName": "data_nascimento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "curso",
+              "displayName": "curso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1360,
+        48
+      ],
+      "id": "e475c502-f9a6-4ece-9b0e-463ea42b6ff7",
+      "name": "Insert rows Business",
+      "credentials": {
+        "postgres": {
+          "id": "Ppf9yzgfNAIIlCqm",
+          "name": "Postgres account 27"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Seja Bem Vindo(a)",
+        "emailType": "text",
+        "message": "=Olá {{ $json.nome.trim() }}, sua matrícula no curso {{ $json.curso.trim() }} foi recebida com sucesso!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1568,
+        -112
+      ],
+      "id": "66293380-5b4c-4b0e-a62a-9c5be0cfaf88",
+      "name": "Send email",
+      "webhookId": "84c93784-77ad-440f-9e92-e2e19a452bbc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kYoYiBGN8nifVNiC",
+          "name": "Gmail account 23"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Seja Bem Vindo(a)",
+        "emailType": "text",
+        "message": "=Olá {{ $json.nome.trim() }}, sua matrícula no curso {{ $json.curso.trim() }} foi recebida com sucesso!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1568,
+        64
+      ],
+      "id": "ae332ef7-21e1-4244-91a1-f3d5e22b75e5",
+      "name": "Send a message",
+      "webhookId": "84c93784-77ad-440f-9e92-e2e19a452bbc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kYoYiBGN8nifVNiC",
+          "name": "Gmail account 23"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (csv)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (nome)": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (telefone)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (telefone)": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (data_nascimento)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (data_nascimento)": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (csv)": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (nome)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Insert rows Tech",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert rows Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows Tech": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows Business": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c2d827ca-6132-4fef-b55b-b323cb989189",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc0bcbaed5942825d40eb7dd9dcbb6ab0108046af92a3af9d5e04ea54a24a948"
+  },
+  "id": "rJhigWsLzLztqbNT",
+  "tags": []
+}
